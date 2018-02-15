@@ -1,6 +1,6 @@
 # Stellar Hardware Wallet Ng App
 
-This project implements basic wallet functionality to manage Stellar test accounts. Access to this wallet is secured by possession of the flash drive containing the wallet. All data is stored within files residing on the flash drive so no sensitive financial data is ever stored store locally on the end user's computer. Since this codebase is in the "proof of concept" stage, all access is restricted to the Stellar test network.
+This project implements basic wallet functionality to manage Stellar test accounts. Access to this wallet is secured by possession of a flash drive containing the wallet. All data is stored within files residing on the flash drive. No sensitive financial data is exposed locally on the end user's computer. Since this codebase is in the "proof of concept" stage, all access is restricted to the Stellar test network.
 
 Basic wallet functionality includes:
 - **create** -  Create a test account using the Stellar Friendbot and an accompanying passphrase.
@@ -9,7 +9,7 @@ Basic wallet functionality includes:
 - **transfer** - Transfer funds (in lumens) between 2 test accounts. The passphrase is needed to perform this operation.
 - **transactions** - Query Stellar test account transactions.
 
-Account keys, pubic key and secret seed, are hashed or encrypted to eliminate exposure. Keys are stored in the cloud and never stored store locally on the end user's computer. 
+Account keys, public key and secret seed, are hashed or encrypted to eliminate exposure. Keys are stored on the flash drive and never stored store locally on the end user's computer. 
 
 The create, import, and transfer functions are further secured by a user chosen passphrase. The balance and transaction query functions are public within the Stellar network so no passphrase is needed.
 
