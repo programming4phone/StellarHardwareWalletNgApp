@@ -27,6 +27,8 @@ This project also uses primeng, font-awesome, js-stellar-sdk, and crypto-js.
 
 Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
 
+Make sure that the Stellar Hardware Wallet Key Server is running on port 5775.
+
 ## Code scaffolding
 
 Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
