@@ -2,66 +2,62 @@ import { Component, OnInit } from '@angular/core';
 import { Message } from 'primeng/components/common/api';
 import { WalletKeyService } from '../services/wallet-key.service';
 import { HttpErrorResponse } from '@angular/common/http';
+import { SpinnerPanelHandler } from '../abstract/spinner-panel-handler.class';
 
 const AES = require('crypto-js/aes');
 const SHA256 = require('crypto-js/sha256');
 const StellarSdk = require('stellar-sdk');
+const MSG_SUMMARY_TITLE = 'Import to Wallet';
 
 @Component({
   selector: 'app-import-account',
   templateUrl: './import-account.component.html',
   styleUrls: ['./import-account.component.css']
 })
-export class ImportAccountComponent implements OnInit {
+export class ImportAccountComponent extends SpinnerPanelHandler implements OnInit {
 
   public inpPassphrase: string;
   public inpSecretSeed: string;
-  public msgs: Message[] = [];
-  public showPanel: boolean;
-  public showSpinner: boolean;
   public _accountId: string;
   public _secretSeed: string;
 
-  constructor(private walletKeyService: WalletKeyService) { }
+  constructor(private walletKeyService: WalletKeyService) { super(); }
 
   ngOnInit() {
-    this.showPanel = false;
-    this.showSpinner = false;
+    this.handleInit();
     console.log(this);
   }
 
   import2Wallet() {
 
-    this.showPanel = false;
-    this.showSpinner = true;
+    this.handleStart();
     console.log('import2Wallet ');
 
-    console.log('inpSecretSeed: ' + this.inpSecretSeed);
-    console.log('inpPassphrase: ' + this.inpPassphrase);
+    // console.log('inpSecretSeed: ' + this.inpSecretSeed);
+    // console.log('inpPassphrase: ' + this.inpPassphrase);
 
     // Get account id (public key) from keypair using secret seed
     const sourceKeypair: any = StellarSdk.Keypair.fromSecret(this.inpSecretSeed);
     const sourcePublicKey: string = sourceKeypair.publicKey();
-    console.log('sourcePublicKey: ' + sourcePublicKey);
+    // console.log('sourcePublicKey: ' + sourcePublicKey);
 
     // Hash public key and convert to Base64 for transport to key server
     const hashedPublicKey: string = SHA256(sourceKeypair.publicKey());
     const hashedBase64PublicKey: string = btoa(hashedPublicKey);
-    console.log('hashedPublicKey: ' + hashedPublicKey);
-    console.log('hashedBase64PublicKey: ' + hashedBase64PublicKey);
+    // console.log('hashedPublicKey: ' + hashedPublicKey);
+    // console.log('hashedBase64PublicKey: ' + hashedBase64PublicKey);
 
     // encrypt secret seed and convert to Base64 for transport to key server
     const encryptedSecretSeed: any =  AES.encrypt(this.inpSecretSeed, this.inpPassphrase);
     const encryptedBase64SecretSeed: string = btoa(encryptedSecretSeed.toString());
-    console.log('encryptedSecretSeed: ' + encryptedSecretSeed.toString());
-    console.log('encryptedBase64SecretSeed: ' + encryptedBase64SecretSeed);
+    // console.log('encryptedSecretSeed: ' + encryptedSecretSeed.toString());
+    // console.log('encryptedBase64SecretSeed: ' + encryptedBase64SecretSeed);
 
     this.walletKeyService.saveKeys(hashedBase64PublicKey, encryptedBase64SecretSeed).subscribe(
       data => {
         this._accountId = sourcePublicKey;
         this._secretSeed = this.inpSecretSeed;
-        this.showSpinner = false;
-        this.showPanel = true;
+        this.handleSuccess();
       },
       (err: HttpErrorResponse) => {
         let errMsg: string;
@@ -78,10 +74,7 @@ export class ImportAccountComponent implements OnInit {
           }
         }
         console.log(errMsg);
-        this.msgs = [];
-        this.msgs.push({severity: 'error', summary: 'Import to Wallet', detail: errMsg });
-        this.showSpinner = false;
-        this.showPanel = false;
+        this.handleError(MSG_SUMMARY_TITLE, errMsg);
       },
       () => {
           //

@@ -2,36 +2,32 @@ import { Component, OnInit } from '@angular/core';
 import { Message } from 'primeng/components/common/api';
 import { WalletKeyService } from '../services/wallet-key.service';
 import { HttpErrorResponse } from '@angular/common/http';
-
+import { SpinnerPanelHandler } from '../abstract/spinner-panel-handler.class';
 const AES = require('crypto-js/aes');
 const SHA256 = require('crypto-js/sha256');
 const StellarSdk = require('stellar-sdk');
+const MSG_SUMMARY_TITLE = 'Create Test Account';
 
 @Component({
   selector: 'app-create-account',
   templateUrl: './create-account.component.html',
   styleUrls: ['./create-account.component.css']
 })
-export class CreateAccountComponent implements OnInit {
+export class CreateAccountComponent extends SpinnerPanelHandler implements OnInit {
 
   public inpPassphrase: string;
-  public msgs: Message[] = [];
-  public showPanel: boolean;
-  public showSpinner: boolean;
   public _accountId: string;
   public _secretSeed: string;
 
-  constructor(private walletKeyService: WalletKeyService) { }
+  constructor(private walletKeyService: WalletKeyService) { super(); }
 
   ngOnInit() {
-    this.showPanel = false;
-    this.showSpinner = false;
+    this.handleInit();
     console.log(this);
   }
 
   createTestAccount() {
-    this.showPanel = false;
-    this.showSpinner = true;
+    this.handleStart();
     console.log('createTestAccount ');
 
     console.log('inpPassphrase: ' + this.inpPassphrase);
@@ -44,8 +40,7 @@ export class CreateAccountComponent implements OnInit {
 
         this.saveKeys(newKeypair, this.inpPassphrase);
 
-        this.showSpinner = false;
-        this.showPanel = true;
+        this.handleSuccess();
       },
       (err: HttpErrorResponse) => {
         this.processHttpErrorResponse(err, 'getTestAccount');
@@ -60,19 +55,18 @@ export class CreateAccountComponent implements OnInit {
     // Hash public key and convert to Base64 for transport to key server
     const hashedPublicKey: string = SHA256(newKeypair.publicKey());
     const hashedBase64PublicKey: string = btoa(hashedPublicKey);
-    console.log('hashedPublicKey: ' + hashedPublicKey);
-    console.log('hashedBase64PublicKey: ' + hashedBase64PublicKey);
+    // console.log('hashedPublicKey: ' + hashedPublicKey);
+    // console.log('hashedBase64PublicKey: ' + hashedBase64PublicKey);
 
     // encrypt secret seed and convert to Base64 for transport to key server
     const encryptedSecretSeed: any =  AES.encrypt(newKeypair.secret(), passphrase);
     const encryptedBase64SecretSeed: string = btoa(encryptedSecretSeed.toString());
-    console.log('encryptedSecretSeed: ' + encryptedSecretSeed.toString());
-    console.log('encryptedBase64SecretSeed: ' + encryptedBase64SecretSeed);
+    // console.log('encryptedSecretSeed: ' + encryptedSecretSeed.toString());
+    // console.log('encryptedBase64SecretSeed: ' + encryptedBase64SecretSeed);
 
     this.walletKeyService.saveKeys(hashedBase64PublicKey, encryptedBase64SecretSeed).subscribe(
       data => {
-        this.showSpinner = false;
-        this.showPanel = true;
+        this.handleSuccess();
        },
       (err: HttpErrorResponse) => {
         this.processHttpErrorResponse(err, 'saveKeys');
@@ -96,8 +90,6 @@ export class CreateAccountComponent implements OnInit {
         errMsg = `walletKeyService.${serviceName} webservice returned code ${err.status}, body was: ${err.error}`;
       }
     }
-    this.msgs.push({severity: 'error', summary: 'Create Test Account', detail: errMsg });
-    this.showSpinner = false;
-    this.showPanel = false;
+    this.handleError(MSG_SUMMARY_TITLE, errMsg);
   }
 }

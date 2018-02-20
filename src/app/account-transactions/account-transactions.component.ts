@@ -2,32 +2,29 @@ import { Component, OnInit } from '@angular/core';
 import { Message } from 'primeng/components/common/api';
 import { AccountTransaction } from '../entities/account-transaction.model';
 import { environment } from '../../environments/environment';
+import { SpinnerPanelHandler } from '../abstract/spinner-panel-handler.class';
 const StellarSdk = require('stellar-sdk');
+const MSG_SUMMARY_TITLE = 'Account Transactions';
 
 @Component({
   selector: 'app-account-transactions',
   templateUrl: './account-transactions.component.html',
   styleUrls: ['./account-transactions.component.css']
 })
-export class AccountTransactionsComponent implements OnInit {
+export class AccountTransactionsComponent extends SpinnerPanelHandler implements OnInit {
 
   public inpAccountId: string;
-  public msgs: Message[] = [];
-  public showPanel: boolean;
-  public showSpinner: boolean;
   public accountTransactions: AccountTransaction[];
 
-  constructor() { }
+  constructor() { super(); }
 
   ngOnInit() {
-    this.showPanel = false;
-    this.showSpinner = false;
+    this.handleInit();
     console.log(this);
   }
 
   getTransactions() {
-    this.showPanel = false;
-    this.showSpinner = true;
+    this.handleStart();
     console.log('getTransactions ');
 
     console.log('inpAccountId: ' + this.inpAccountId);
@@ -48,8 +45,7 @@ export class AccountTransactionsComponent implements OnInit {
           this.accountTransactions.push(accountTransaction);
         });
         // return page.next();
-        this.showSpinner = false;
-        this.showPanel = true;
+        this.handleSuccess();
     })
     // .then(function (page) {
     //  console.log('Page 2: ');
@@ -63,10 +59,7 @@ export class AccountTransactionsComponent implements OnInit {
       } else {
         errMsg = err.name;
       }
-      this.msgs = [];
-      this.msgs.push({severity: 'error', summary: 'Account Transactions', detail: errMsg });
-      this.showSpinner = false;
-      this.showPanel = false;
+      this.handleError(MSG_SUMMARY_TITLE, errMsg);
     });
   }
 

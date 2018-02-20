@@ -1,34 +1,29 @@
 import { Component, OnInit } from '@angular/core';
 import { AssetBalance } from '../entities/asset-balance.model';
-import { Message } from 'primeng/components/common/api';
 import { environment } from '../../environments/environment';
-
+import { SpinnerPanelHandler } from '../abstract/spinner-panel-handler.class';
 const StellarSdk = require('stellar-sdk');
+const MSG_SUMMARY_TITLE = 'Account Balance';
 
 @Component({
   selector: 'app-account-balance',
   templateUrl: './account-balance.component.html',
   styleUrls: ['./account-balance.component.css']
 })
-export class AccountBalanceComponent implements OnInit {
+export class AccountBalanceComponent extends SpinnerPanelHandler implements OnInit  {
 
   public inpAccountId: string;
-  public msgs: Message[] = [];
-  public showPanel: boolean;
-  public showSpinner: boolean;
   public assetBalances: AssetBalance[];
 
-  constructor() { }
+  constructor() { super(); }
 
   ngOnInit() {
-    this.showPanel = false;
-    this.showSpinner = false;
+    this.handleInit();
     console.log(this);
   }
 
   getBalances() {
-    this.showPanel = false;
-    this.showSpinner = true;
+    this.handleStart();
     console.log('getBalances ');
 
     console.log('inpAccountId: ' + this.inpAccountId);
@@ -50,25 +45,15 @@ export class AccountBalanceComponent implements OnInit {
           console.log('Type:', balance.asset_type, ', Code:', balance.asset_code, ', Balance:', balance.balance);
           this.assetBalances.push(assetBalance);
         });
-        this.showSpinner = false;
-        this.showPanel = true;
+        this.handleSuccess();
       })
       .catch((err) => {
         console.log(err);
-        this.handleError(err);
+        this.handleError(MSG_SUMMARY_TITLE, err);
       });
     } catch (err) {
       console.log(err);
-      this.handleError('Invalid Account ID.');
+      this.handleError(MSG_SUMMARY_TITLE, 'Invalid Account ID.');
     }
   }
-
-  private handleError(errormsg: any) {
-    console.log(errormsg);
-    this.msgs = [];
-    this.msgs.push({severity: 'error', summary: 'Account Balance', detail: errormsg });
-    this.showSpinner = false;
-    this.showPanel = false;
-  }
-
 }

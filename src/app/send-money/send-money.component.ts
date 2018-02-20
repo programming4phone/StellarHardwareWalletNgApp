@@ -3,47 +3,44 @@ import { Message } from 'primeng/components/common/api';
 import { WalletKeyService } from '../services/wallet-key.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { environment } from '../../environments/environment';
+import { SpinnerPanelHandler } from '../abstract/spinner-panel-handler.class';
 
 const CryptoJS = require('crypto-js');
 const StellarSdk = require('stellar-sdk');
+const MSG_SUMMARY_TITLE = 'Send Money';
 
 @Component({
   selector: 'app-send-money',
   templateUrl: './send-money.component.html',
   styleUrls: ['./send-money.component.css']
 })
-export class SendMoneyComponent implements OnInit {
+export class SendMoneyComponent extends SpinnerPanelHandler implements OnInit {
 
   public inpPassphrase: string;
   public inpFromAccountId: string;
   public inpToAccountId: string;
   public inpAmount: string;
-  public msgs: Message[] = [];
-  public showPanel: boolean;
-  public showSpinner: boolean;
   public _secretSeed: string;
   public _fromAccountId: string;
   public _toAccountId: string;
   public _amountSent: string;
 
-  constructor(private walletKeyService: WalletKeyService) { }
+  constructor(private walletKeyService: WalletKeyService) { super(); }
 
   ngOnInit() {
-    this.showPanel = false;
-    this.showSpinner = false;
+    this.handleInit();
     console.log(this);
   }
 
   sendMoney() {
-    this.showPanel = false;
-    this.showSpinner = true;
+    this.handleStart();
     console.log('sendMoney ');
 
     // Hash public key and convert to Base64 for transport to key server
     const hashedPublicKey: string = CryptoJS.SHA256(this.inpFromAccountId);
     const hashedBase64PublicKey: string = btoa(hashedPublicKey);
-    console.log('hashedPublicKey: ' + hashedPublicKey);
-    console.log('hashedBase64PublicKey: ' + hashedBase64PublicKey);
+    // console.log('hashedPublicKey: ' + hashedPublicKey);
+    // console.log('hashedBase64PublicKey: ' + hashedBase64PublicKey);
 
     this.walletKeyService.getKeys(hashedBase64PublicKey).subscribe(
       data => {
@@ -56,8 +53,6 @@ export class SendMoneyComponent implements OnInit {
         const bytes: any = CryptoJS.AES.decrypt(encryptedSeed, this.inpPassphrase);
         this._secretSeed = bytes.toString(CryptoJS.enc.Utf8);
         this.transferFunds();
-        // this.showSpinner = false;
-        // this.showPanel = true;
       },
       (err: HttpErrorResponse) => {
         let errMsg: string;
@@ -77,10 +72,7 @@ export class SendMoneyComponent implements OnInit {
           }
         }
         console.log(errMsg);
-        this.msgs = [];
-        this.msgs.push({severity: 'error', summary: 'Send Money', detail: errMsg });
-        this.showSpinner = false;
-        this.showPanel = false;
+        this.handleError(MSG_SUMMARY_TITLE, errMsg);
       },
       () => {
           //
@@ -132,15 +124,11 @@ export class SendMoneyComponent implements OnInit {
         this._fromAccountId = this.inpFromAccountId;
         this._toAccountId = this.inpToAccountId;
         this._amountSent = this.inpAmount;
-        this.showSpinner = false;
-        this.showPanel = true;
+        this.handleSuccess();
       })
       .catch((error) => {
         console.error('Something went wrong!', error);
-        this.msgs = [];
-        this.msgs.push({severity: 'error', summary: 'Send Money', detail: error });
-        this.showSpinner = false;
-        this.showPanel = false;
+        this.handleError(MSG_SUMMARY_TITLE, error);
         // If the result is unknown (no response body, timeout etc.) we simply resubmit
         // already built transaction:
         // server.submitTransaction(transaction);
